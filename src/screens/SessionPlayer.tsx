@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import confetti from 'canvas-confetti'
 import { ArrowLeft, Check, ChevronDown, Flame, Pause, Play, SkipForward, X } from 'lucide-react'
@@ -9,44 +8,19 @@ import { currentStreak, currentWeek } from '../lib/scheduleUtils'
 import { getProgressionWeek } from '../data/progression'
 import { dayByWeekday, dayById } from '../data/workout'
 import { buildSession } from '../lib/session'
+import { clearActiveSession, loadActiveSession, saveActiveSession } from '../lib/activeSession'
+import { playChime, playFinish, playTick } from '../lib/sounds'
 import { ExerciseImage } from '../components/ExerciseImage'
 import { Button } from '../components/Button'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { clock } from '../lib/format'
 import { cn } from '../lib/cn'
 
 const phaseTitle = (phase: 'warmup' | 'main' | 'cooldown', isYoga: boolean) =>
   phase === 'warmup' ? 'Warm-up' : phase === 'cooldown' ? 'Cool-down' : isYoga ? 'Yoga Flow' : 'Main Workout'
 
-/** Self-contained per-step timer. Keyed by step index so it mounts fresh each step. */
-function Countdown({
-  duration,
-  paused,
-  onComplete,
-  children,
-}: {
-  duration: number
-  paused: boolean
-  onComplete: () => void
-  children: (remaining: number) => ReactNode
-}) {
-  const [remaining, setRemaining] = useState(duration)
-  const done = useRef(false)
-
-  useEffect(() => {
-    if (paused || remaining <= 0) return
-    const id = setTimeout(() => setRemaining((r) => r - 1), 1000)
-    return () => clearTimeout(id)
-  }, [paused, remaining])
-
-  useEffect(() => {
-    if (remaining <= 0 && !done.current) {
-      done.current = true
-      onComplete()
-    }
-  }, [remaining, onComplete])
-
-  return <>{children(remaining)}</>
-}
+const stepDuration = (s: { kind: 'rest'; seconds: number } | { kind: 'exercise'; durationSeconds?: number } | undefined) =>
+  s?.kind === 'rest' ? s.seconds : s?.kind === 'exercise' ? s.durationSeconds ?? 0 : 0
 
 export default function SessionPlayer() {
   const navigate = useNavigate()
@@ -54,64 +28,124 @@ export default function SessionPlayer() {
   const { state, completeSession } = useStore()
   const today = todayKey()
 
+  // Resume a persisted session if there is one; otherwise start the requested day.
+  const persistedRef = useRef(loadActiveSession())
+  const persisted = persistedRef.current
   const paramDay = params.get('day')
   const todays = dayByWeekday[weekdayOf(today)]
-  const day = (paramDay && dayById[paramDay]) || (todays.type !== 'rest' ? todays : dayById['day-1'])
+  const dayId =
+    persisted?.dayId ?? (paramDay && dayById[paramDay] ? paramDay : todays.type !== 'rest' ? todays.id : 'day-1')
+  const day = dayById[dayId] ?? dayById['day-1']
   const rounds = getProgressionWeek(currentWeek(state.startDate, today)).rounds
-
   const steps = useMemo(() => buildSession(day, rounds), [day, rounds])
 
-  const [index, setIndex] = useState(0)
-  const [paused, setPaused] = useState(false)
+  const [index, setIndex] = useState(persisted?.index ?? 0)
+  const [completed, setCompleted] = useState<string[]>(persisted?.completed ?? [])
+  const [stepEndsAt, setStepEndsAt] = useState<number | null>(persisted?.stepEndsAt ?? null)
+  const [pausedRemaining, setPausedRemaining] = useState<number | null>(persisted?.pausedRemaining ?? null)
+  const [paused, setPaused] = useState<boolean>(persisted?.pausedRemaining != null)
+  const [now, setNow] = useState(Date.now())
   const [showEasier, setShowEasier] = useState(false)
   const [finished, setFinished] = useState(false)
-  const completedRef = useRef<Set<string>>(new Set())
+  const [showQuit, setShowQuit] = useState(false)
 
   const step = steps[index]
   const isTimed = step?.kind === 'rest' || (step?.kind === 'exercise' && step.durationSeconds != null)
+  const remaining = paused
+    ? pausedRemaining ?? 0
+    : stepEndsAt != null
+      ? Math.max(0, Math.ceil((stepEndsAt - now) / 1000))
+      : 0
 
-  // reset transient UI when the step changes
-  useEffect(() => {
-    setPaused(false)
+  const sound = (fn: () => void) => {
+    if (state.soundEnabled) fn()
+  }
+
+  const goToStep = (i: number) => {
+    if (i < 0 || i >= steps.length) return
+    const dur = stepDuration(steps[i])
     setShowEasier(false)
-  }, [index])
-
-  const chime = () => {
-    if (!state.soundEnabled) return
-    try {
-      const Ctx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-      const ctx = new Ctx()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.type = 'sine'
-      osc.frequency.value = 680
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4)
-      osc.start()
-      osc.stop(ctx.currentTime + 0.42)
-      osc.onended = () => ctx.close()
-      if (navigator.vibrate) navigator.vibrate(80)
-    } catch {
-      /* audio unavailable */
-    }
+    setPaused(false)
+    setPausedRemaining(null)
+    setStepEndsAt(dur > 0 ? Date.now() + dur * 1000 : null)
+    setIndex(i)
   }
 
   const advance = (markDone: boolean) => {
-    if (step?.kind === 'exercise' && markDone) completedRef.current.add(step.exercise.id)
+    if (step?.kind === 'exercise' && markDone) {
+      setCompleted((c) => (c.includes(step.exercise.id) ? c : [...c, step.exercise.id]))
+    }
     if (index >= steps.length - 1) setFinished(true)
-    else setIndex((i) => i + 1)
+    else goToStep(index + 1)
   }
 
-  // On finish: persist + celebrate
+  // Mount: for a fresh start (no persisted), arm the timer for step 0.
+  useEffect(() => {
+    if (!persistedRef.current) {
+      const dur = stepDuration(steps[0])
+      if (dur > 0) setStepEndsAt(Date.now() + dur * 1000)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Wall-clock tick (keeps running by absolute time; re-syncs when tab becomes visible).
+  useEffect(() => {
+    if (finished) return
+    const id = setInterval(() => setNow(Date.now()), 250)
+    const onVisible = () => {
+      if (!document.hidden) setNow(Date.now())
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [finished])
+
+  // Auto-advance a timed step when its end time passes (even after being backgrounded).
+  useEffect(() => {
+    if (finished || paused || stepEndsAt == null) return
+    if (now >= stepEndsAt) {
+      sound(playChime)
+      if (state.soundEnabled && navigator.vibrate) navigator.vibrate(60)
+      advance(step?.kind === 'exercise')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [now, paused, stepEndsAt, finished])
+
+  // Persist the session so it survives a close (not on every tick — end time is absolute).
+  useEffect(() => {
+    if (finished) return
+    saveActiveSession({
+      dayId: day.id,
+      index,
+      completed,
+      stepEndsAt: paused ? null : stepEndsAt,
+      pausedRemaining: paused ? pausedRemaining ?? remaining : null,
+      startedAt: persistedRef.current?.startedAt ?? Date.now(),
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, completed, stepEndsAt, paused, pausedRemaining, finished, day.id])
+
+  // Quit-resistance: a back press shows a confirm instead of leaving. Only finishing counts.
+  useEffect(() => {
+    if (finished) return
+    window.history.pushState({ sw: 'session' }, '')
+    const onPop = () => {
+      window.history.pushState({ sw: 'session' }, '')
+      setShowQuit(true)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [finished])
+
+  // Finish: save + celebrate, clear the active session.
   useEffect(() => {
     if (!finished) return
-    completeSession(day.id, Array.from(completedRef.current), today)
-    if (navigator.vibrate && state.soundEnabled) navigator.vibrate([60, 40, 120])
+    completeSession(day.id, completed, today)
+    clearActiveSession()
+    sound(playFinish)
+    if (state.soundEnabled && navigator.vibrate) navigator.vibrate([60, 40, 120])
     const shots = [
       setTimeout(() => burst(0.3), 0),
       setTimeout(() => burst(0.7), 180),
@@ -121,10 +155,20 @@ export default function SessionPlayer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished])
 
-  const exit = () => {
-    if (completedRef.current.size > 0 && !finished) {
-      completeSession(day.id, Array.from(completedRef.current), today)
+  const togglePause = () => {
+    if (paused) {
+      setStepEndsAt(Date.now() + (pausedRemaining ?? 0) * 1000)
+      setPausedRemaining(null)
+      setPaused(false)
+    } else {
+      setPausedRemaining(remaining)
+      setStepEndsAt(null)
+      setPaused(true)
     }
+  }
+
+  const quit = () => {
+    clearActiveSession()
     navigate('/')
   }
 
@@ -133,6 +177,7 @@ export default function SessionPlayer() {
   }
 
   if (!step) {
+    clearActiveSession()
     return (
       <div className="flex min-h-dvh items-center justify-center bg-cream p-6">
         <Button onClick={() => navigate('/workout')}>Back to workout</Button>
@@ -149,8 +194,8 @@ export default function SessionPlayer() {
       <div className="flex items-center gap-3 px-4 pt-4">
         <button
           type="button"
-          onClick={exit}
-          aria-label="Exit session"
+          onClick={() => setShowQuit(true)}
+          aria-label="Quit session"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm shadow-black/5 transition active:scale-95"
         >
           <X className="h-5 w-5 text-ink" />
@@ -161,9 +206,7 @@ export default function SessionPlayer() {
       </div>
 
       {step.kind === 'rest' ? (
-        <Countdown key={index} duration={step.seconds} paused={paused} onComplete={() => { chime(); advance(false) }}>
-          {(r) => <RestView seconds={r} label={step.label} paused={paused} />}
-        </Countdown>
+        <RestView seconds={remaining} label={step.label} paused={paused} />
       ) : (
         <div className="flex flex-1 flex-col px-4 pt-4">
           <p className="mb-2 text-sm font-semibold text-coral-600">
@@ -174,9 +217,7 @@ export default function SessionPlayer() {
           <h2 className="mt-4 font-display text-2xl font-bold text-ink">{step.exercise.name}</h2>
 
           {isTimed ? (
-            <Countdown key={index} duration={step.durationSeconds ?? 0} paused={paused} onComplete={() => { chime(); advance(true) }}>
-              {(r) => <p className="mt-1 font-display text-4xl font-bold tabular-nums text-coral-500">{clock(r)}</p>}
-            </Countdown>
+            <p className="mt-1 font-display text-4xl font-bold tabular-nums text-coral-500">{clock(remaining)}</p>
           ) : (
             <p className="mt-1 font-display text-2xl font-bold text-coral-500">{step.reps}</p>
           )}
@@ -202,10 +243,21 @@ export default function SessionPlayer() {
 
       {/* Controls */}
       <div className="space-y-3 px-4 pb-8 pt-4">
-        <Button size="lg" fullWidth onClick={() => advance(step.kind === 'exercise')}>
+        <Button
+          size="lg"
+          fullWidth
+          onClick={() => {
+            sound(playTick)
+            advance(step.kind === 'exercise')
+          }}
+        >
           {step.kind === 'rest' ? (
             <>
               <SkipForward className="h-5 w-5" /> Skip rest
+            </>
+          ) : index >= steps.length - 1 ? (
+            <>
+              <Check className="h-5 w-5" /> Finish workout
             </>
           ) : isTimed ? (
             'Next'
@@ -218,23 +270,48 @@ export default function SessionPlayer() {
 
         <div className="flex items-center justify-center gap-2">
           {index > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setIndex((i) => Math.max(0, i - 1))}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                sound(playTick)
+                goToStep(index - 1)
+              }}
+            >
               <ArrowLeft className="h-4 w-4" /> Previous
             </Button>
           )}
           {isTimed && (
-            <Button variant="ghost" size="sm" onClick={() => setPaused((p) => !p)}>
+            <Button variant="ghost" size="sm" onClick={togglePause}>
               {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
               {paused ? 'Resume' : 'Pause'}
             </Button>
           )}
-          {step.kind === 'exercise' && (
-            <Button variant="ghost" size="sm" onClick={() => advance(false)}>
+          {step.kind === 'exercise' && index < steps.length - 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                sound(playTick)
+                advance(false)
+              }}
+            >
               Skip <SkipForward className="h-4 w-4" />
             </Button>
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showQuit}
+        danger
+        title="Leave this workout?"
+        message="Your progress won't be saved — only finishing the workout counts it. Want to keep going?"
+        confirmLabel="Quit"
+        cancelLabel="Keep going"
+        onConfirm={quit}
+        onCancel={() => setShowQuit(false)}
+      />
     </div>
   )
 }

@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom'
-import { Apple, CheckCircle2, ChevronRight, Clock, Dumbbell, Flame, Flower2, Footprints, Moon } from 'lucide-react'
+import { Apple, CheckCircle2, ChevronRight, Clock, Dumbbell, Flame, Flower2, Footprints, Moon, Play } from 'lucide-react'
 import type { ComponentType } from 'react'
 import type { WorkoutType } from '../types'
 import { useStore } from '../lib/store'
 import { greeting, parseKey, todayKey } from '../lib/dateUtils'
 import { completedOn, currentStreak, currentWeek, isDayDone, resolveSeason, todaysDay } from '../lib/scheduleUtils'
 import { dayById } from '../data/workout'
+import { loadActiveSession } from '../lib/activeSession'
 import { getProgressionWeek } from '../data/progression'
 import { motivationForDate } from '../data/motivation'
 import { Button } from '../components/Button'
@@ -33,6 +34,7 @@ export default function Today() {
   const navigate = useNavigate()
   const { state, logWalk } = useStore()
   const today = todayKey()
+  const resume = loadActiveSession()
   const day = todaysDay(today)
   const week = currentWeek(state.startDate, today)
   const prog = getProgressionWeek(week)
@@ -64,6 +66,23 @@ export default function Today() {
           <div className="rounded-full bg-sand px-3 py-2 text-sm font-semibold text-ink-soft">New start</div>
         )}
       </header>
+
+      {resume && (
+        <button
+          type="button"
+          onClick={() => navigate('/workout/session')}
+          className="flex w-full items-center gap-3 rounded-3xl bg-coral-500 p-4 text-left text-white shadow-lg shadow-coral-200 transition active:scale-[0.99]"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <Play className="h-5 w-5 fill-white" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-display font-bold">Workout in progress</p>
+            <p className="text-sm text-white/90">Tap to resume {dayById[resume.dayId]?.dayLabel ?? 'your session'}</p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-white/80" />
+        </button>
+      )}
 
       {/* Hero — today's plan */}
       {isRest ? (

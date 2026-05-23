@@ -8,6 +8,7 @@ import { workoutDays } from '../data/workout'
 import { getExercise } from '../data/exercises'
 import { getProgressionWeek } from '../data/progression'
 import { typeIcon } from '../lib/dayUi'
+import { clearActiveSession } from '../lib/activeSession'
 import { formatDuration } from '../lib/format'
 import { ExerciseCard } from '../components/ExerciseCard'
 import { Button } from '../components/Button'
@@ -90,7 +91,10 @@ export default function Workout() {
           size="lg"
           fullWidth
           className="mt-4"
-          onClick={() => navigate(`/workout/session?day=${day.id}`)}
+          onClick={() => {
+            clearActiveSession()
+            navigate(`/workout/session?day=${day.id}`)
+          }}
         >
           <Play className="h-5 w-5 fill-white" /> Begin Guided Session
         </Button>
