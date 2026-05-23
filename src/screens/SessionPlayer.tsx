@@ -349,17 +349,34 @@ const CELEBRATION_LINES = [
   "That wasn't easy for you, and you did it anyway. Main proud hoon tujhpe.",
   'Done! Future-you is going to be so glad you did this one.',
   'Chhoti si jeet, par jeet hai — ek aur session, ek aur step stronger.',
+  'Look at you go. I wish I could give you a big hug right now.',
+  'Tujhe chhota lage shayad, but this is exactly how strength is built — bit by bit.',
+  'Your body just said thank you, even if it did it quietly.',
+  'Thoda stronger than yesterday. Main dekh raha hoon, Shreya. Keep going.',
 ]
 
+function milestoneLine(streak: number, name: string): string | null {
+  if (streak === 1) return `Your very first one is done, ${name}. The hardest step — taken. So, so proud of you.`
+  if (streak === 3) return "Three days in a row! Tu seriously kar rahi hai ye. I'm cheering so loud right now."
+  if (streak === 7) return `A whole week, ${name}. Pura hafta! This is officially a habit now.`
+  if (streak === 14) return 'Two weeks strong. Main keh raha tha na — tu kar legi. And you did.'
+  if (streak === 21) return 'Three weeks! Yeh ab tera routine ban gaya hai. Look how far you have come.'
+  if (streak >= 30 && streak % 30 === 0) return `${streak} days, ${name}. Tu unstoppable ho gayi hai. I am in awe of you.`
+  return null
+}
+
 function Celebration({ name, streak, onDone }: { name: string; streak: number; onDone: () => void }) {
-  const [line] = useState(() => CELEBRATION_LINES[Math.floor(Math.random() * CELEBRATION_LINES.length)])
+  // Freeze the random fallback, but derive the milestone from the *live* streak
+  // (it updates a tick after completion, once today's session is saved).
+  const [idx] = useState(() => Math.floor(Math.random() * CELEBRATION_LINES.length))
+  const line = milestoneLine(streak, name) ?? CELEBRATION_LINES[idx]
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[26rem] flex-col items-center justify-center bg-cream px-6 text-center">
       <div className="flex h-24 w-24 items-center justify-center rounded-full bg-coral-500 shadow-lg shadow-coral-200">
         <Check className="h-12 w-12 text-white" strokeWidth={3} />
       </div>
       <h1 className="mt-6 font-display text-3xl font-bold text-ink">You did it, {name}!</h1>
-      <p className="mt-2 text-lg leading-relaxed text-ink-soft">{line}</p>
+      <p className="mt-3 max-w-[22rem] text-xl font-medium leading-relaxed text-ink">{line}</p>
       <div className="mt-6 flex items-center gap-2 rounded-full bg-coral-100 px-5 py-3 text-coral-700">
         <Flame className="h-6 w-6 fill-coral-300 text-coral-500" />
         <span className="font-display text-xl font-bold">{streak}</span>

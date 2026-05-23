@@ -55,6 +55,10 @@ export default function Progress() {
         <p className="mt-3 text-center font-display font-semibold">{streakLine}</p>
       </div>
 
+      <p className="px-1 text-center text-sm leading-relaxed text-ink-soft">
+        Every mark here is a day you chose yourself, Shreya. That's a big deal.
+      </p>
+
       {/* This week */}
       <section>
         <h2 className="mb-2 px-1 font-display font-bold text-ink">This week</h2>

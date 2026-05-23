@@ -1,10 +1,19 @@
 // Offline support + web-push handling.
 // Runtime cache so the app works fully offline after the first load;
 // SPA navigations fall back to the cached app shell.
-const CACHE = 'shreya-wellness-v1'
+const CACHE = 'shreya-wellness-v3'
 
 self.addEventListener('install', () => self.skipWaiting())
-self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
+self.addEventListener('activate', (event) =>
+  event.waitUntil(
+    (async () => {
+      // Drop old caches so a new deploy is served fresh, not a stale build.
+      const keys = await caches.keys()
+      await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      await self.clients.claim()
+    })(),
+  ),
+)
 
 self.addEventListener('fetch', (event) => {
   const { request } = event

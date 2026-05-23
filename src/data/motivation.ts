@@ -8,6 +8,11 @@ export const motivationLines: string[] = [
   'After-meal walks are tiny but powerful. Even 10 minutes counts.',
   'Drink your water, Shreya. Future-you will be grateful.',
   "You're not behind. You're exactly at the start, and that's a great place to be.",
+  'Whatever today looks like, I am really glad you opened this. — your friend',
+  'Tu kar legi, Shreya. You always do, even when you doubt it.',
+  'Be gentle with yourself today. Showing up is already more than enough.',
+  'Proud of you for being here. Yeh chhoti baat nahi hai.',
+  'Rough day? Just do the warm-up and stop — that still counts, pakka.',
 ]
 
 // Pick a stable line for a given date (so it stays the same all day, rotates daily).

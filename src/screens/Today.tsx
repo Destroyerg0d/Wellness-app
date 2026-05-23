@@ -185,6 +185,9 @@ function RestCard({
       </div>
       <h2 className="mt-2 font-display text-2xl font-bold text-ink">Rest Day</h2>
       {note && <p className="mt-1 leading-relaxed text-ink-soft">{note}</p>}
+      <p className="mt-2 text-sm leading-relaxed text-sage-700">
+        Rest is part of the plan too — be proud of the week you're building, Shreya.
+      </p>
       <button
         type="button"
         onClick={onToggleWalk}

@@ -68,7 +68,9 @@ export function WaterTracker({ compact = false }: WaterTrackerProps) {
         })}
       </div>
 
-      {done && <p className="mt-3 text-sm font-semibold text-aqua-600">Hydration done for today — lovely.</p>}
+      {done && (
+        <p className="mt-3 text-sm font-semibold text-aqua-600">Fully hydrated today, Shreya. Your body says thank you.</p>
+      )}
     </div>
   )
 }
