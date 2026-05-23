@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { BottomNav } from './BottomNav'
+import { InstallPrompt } from './InstallPrompt'
 
 export default function Layout() {
   const { pathname } = useLocation()
@@ -21,6 +22,7 @@ export default function Layout() {
         <Outlet />
       </motion.main>
       <BottomNav />
+      <InstallPrompt />
     </div>
   )
 }

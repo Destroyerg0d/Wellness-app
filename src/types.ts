@@ -91,6 +91,7 @@ export interface UserState {
   mealLog: Record<string, string[]> // date -> logged meal ids (intake tracking)
   completedSessions: CompletedSession[]
   favoriteMealIds: string[]
+  customMeals: MealOption[] // meals the user added themselves
   onboardingComplete: boolean
   soundEnabled: boolean
   updatedAt: string // ISO timestamp — drives last-write-wins cloud sync

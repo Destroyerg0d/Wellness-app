@@ -16,6 +16,7 @@ export function defaultUserState(): UserState {
     mealLog: {},
     completedSessions: [],
     favoriteMealIds: [],
+    customMeals: [],
     onboardingComplete: false,
     soundEnabled: true,
     updatedAt: new Date(0).toISOString(), // epoch so any real remote/local data is "newer"
@@ -47,6 +48,7 @@ export function loadState(): UserState {
       mealLog: { ...(parsed.mealLog ?? {}) },
       completedSessions: Array.isArray(parsed.completedSessions) ? parsed.completedSessions : [],
       favoriteMealIds: Array.isArray(parsed.favoriteMealIds) ? parsed.favoriteMealIds : [],
+      customMeals: Array.isArray(parsed.customMeals) ? parsed.customMeals : [],
     }
   } catch {
     return defaults

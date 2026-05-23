@@ -20,6 +20,8 @@ interface StoreValue {
   addWater: (delta: number, date?: string) => void
   toggleFavorite: (mealId: string) => void
   toggleMealLog: (mealId: string, date?: string) => void
+  addCustomMeal: (title: string, calories: number, protein: number) => void
+  removeCustomMeal: (id: string) => void
   updateSettings: (patch: SettingsPatch) => void
   resetAll: () => void
 }
@@ -118,6 +120,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const next = day.includes(mealId) ? day.filter((id) => id !== mealId) : [...day, mealId]
           return { ...s, mealLog: { ...s.mealLog, [date]: next } }
         }),
+      addCustomMeal: (title, calories, protein) =>
+        mutate((s) => ({
+          ...s,
+          customMeals: [
+            ...s.customMeals,
+            {
+              id: `custom-${Date.now()}`,
+              title: title.trim() || 'My meal',
+              description: '',
+              prepMinutes: 0,
+              approxCalories: Math.max(0, Math.round(calories)),
+              approxProtein: Math.max(0, Math.round(protein)),
+              nutrients: 'Added by you',
+              hasEggOption: false,
+            },
+          ],
+        })),
+      removeCustomMeal: (id) =>
+        mutate((s) => ({
+          ...s,
+          customMeals: s.customMeals.filter((m) => m.id !== id),
+          favoriteMealIds: s.favoriteMealIds.filter((f) => f !== id),
+        })),
       updateSettings: (patch) => mutate((s) => ({ ...s, ...patch })),
       resetAll: () => {
         clearState()

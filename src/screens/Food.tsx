@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, ChevronDown, Clock, CloudRain, Egg, Heart, Leaf, Moon, Plus, Snowflake, Sparkles, Sun } from 'lucide-react'
+import { Check, ChevronDown, CloudRain, Egg, Heart, Leaf, Moon, Plus, Snowflake, Sparkles, Sun, Trash2 } from 'lucide-react'
 import type { MealOption, Season } from '../types'
 import type { IconType } from '../lib/dayUi'
 import { useStore } from '../lib/store'
@@ -25,7 +25,7 @@ const seasonMeta: Record<Season, { label: string; icon: IconType }> = {
 const seasonOrder: Season[] = ['summer', 'monsoon', 'autumn', 'winter']
 
 export default function Food() {
-  const { state, toggleFavorite, toggleMealLog } = useStore()
+  const { state, toggleFavorite, toggleMealLog, addCustomMeal, removeCustomMeal } = useStore()
   const [viewSeason, setViewSeason] = useState<Season>(() => resolveSeason(state.seasonOverride))
   const [lazyOnly, setLazyOnly] = useState(false)
   const [favOnly, setFavOnly] = useState(false)
@@ -33,7 +33,9 @@ export default function Food() {
 
   const today = todayKey()
   const loggedIds = state.mealLog[today] ?? []
-  const loggedMeals = loggedIds.map((id) => mealsById[id]).filter((m): m is MealOption => Boolean(m))
+  const loggedMeals = loggedIds
+    .map((id) => mealsById[id] ?? state.customMeals.find((m) => m.id === id))
+    .filter((m): m is MealOption => Boolean(m))
   const intakeCalories = loggedMeals.reduce((sum, m) => sum + m.approxCalories, 0)
   const intakeProtein = loggedMeals.reduce((sum, m) => sum + m.approxProtein, 0)
 
@@ -49,6 +51,16 @@ export default function Food() {
       <h1 className="font-display text-2xl font-bold text-ink">Food</h1>
 
       <IntakeCard calories={intakeCalories} protein={intakeProtein} count={loggedMeals.length} />
+
+      <MyMeals
+        meals={state.customMeals}
+        favoriteIds={state.favoriteMealIds}
+        loggedIds={loggedIds}
+        onAdd={addCustomMeal}
+        onFav={toggleFavorite}
+        onLog={toggleMealLog}
+        onRemove={removeCustomMeal}
+      />
 
       {/* Season switcher */}
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
@@ -214,26 +226,43 @@ function MealCard({
   onFav,
   logged,
   onLog,
+  onDelete,
 }: {
   meal: MealOption
   fav: boolean
   onFav: () => void
   logged: boolean
   onLog: () => void
+  onDelete?: () => void
 }) {
-  const [showEgg, setShowEgg] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   return (
-    <div className="rounded-3xl bg-white p-4 shadow-sm shadow-black/5">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-display font-bold text-ink">{meal.title}</h3>
-            {meal.isLazyPick && (
-              <span className="rounded-full bg-sage-100 px-2 py-0.5 text-xs font-semibold text-sage-700">Quick pick</span>
-            )}
-          </div>
-          <p className="mt-0.5 text-sm leading-relaxed text-ink-soft">{meal.description}</p>
-        </div>
+    <div className="rounded-2xl bg-white p-3 shadow-sm shadow-black/5">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5">
+              <span className="truncate font-display font-semibold text-ink">{meal.title}</span>
+              {meal.isLazyPick && (
+                <span className="shrink-0 rounded-full bg-sage-100 px-1.5 py-0.5 text-[10px] font-semibold text-sage-700">
+                  Quick
+                </span>
+              )}
+            </span>
+            <span className="mt-0.5 block text-xs text-ink-soft">
+              ~{meal.approxCalories} kcal · {meal.approxProtein}g protein
+              {meal.prepMinutes ? ` · ${meal.prepMinutes} min` : ''}
+            </span>
+          </span>
+          <ChevronDown
+            className={cn('h-4 w-4 shrink-0 text-ink-soft/50 transition-transform', expanded && 'rotate-180')}
+          />
+        </button>
         <button
           type="button"
           onClick={onFav}
@@ -243,29 +272,29 @@ function MealCard({
         >
           <Heart className={cn('h-5 w-5', fav ? 'fill-coral-500 text-coral-500' : 'text-ink-soft/40')} />
         </button>
+        <button
+          type="button"
+          onClick={onLog}
+          aria-label={logged ? 'Logged today' : 'Log to today'}
+          aria-pressed={logged}
+          className={cn(
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition active:scale-90',
+            logged ? 'bg-sage-500 text-white' : 'bg-coral-50 text-coral-700',
+          )}
+        >
+          {logged ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+        </button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-        <span className="flex items-center gap-1 text-ink-soft">
-          <Clock className="h-3.5 w-3.5" /> {meal.prepMinutes} min
-        </span>
-        <span className="font-semibold text-coral-600">~{meal.approxCalories} kcal</span>
-        <span className="font-semibold text-coral-600">{meal.approxProtein}g protein</span>
-      </div>
-      <p className="mt-1 text-xs text-ink-soft/80">{meal.nutrients}</p>
-
-      {meal.hasEggOption && (
-        <>
-          <button
-            type="button"
-            onClick={() => setShowEgg((v) => !v)}
-            className="mt-3 flex items-center gap-1.5 rounded-full bg-coral-50 px-3 py-1.5 text-sm font-semibold text-coral-700"
-          >
-            <Egg className="h-4 w-4" /> Egg / veg options
-            <ChevronDown className={cn('h-4 w-4 transition-transform', showEgg && 'rotate-180')} />
-          </button>
-          {showEgg && (
+      {expanded && (
+        <div className="mt-3 border-t border-sand-200 pt-3">
+          {meal.description && <p className="text-sm leading-relaxed text-ink-soft">{meal.description}</p>}
+          {meal.nutrients && <p className="mt-1 text-xs text-ink-soft/80">{meal.nutrients}</p>}
+          {meal.hasEggOption && (
             <div className="mt-2 space-y-2 rounded-2xl bg-sand/50 p-3 text-sm">
+              <p className="flex items-center gap-1.5 font-semibold text-coral-700">
+                <Egg className="h-4 w-4" /> Egg / veg options
+              </p>
               {meal.eggNote && (
                 <p className="text-ink">
                   <span className="font-semibold text-coral-700">With egg:</span> {meal.eggNote}
@@ -285,28 +314,135 @@ function MealCard({
               )}
             </div>
           )}
-        </>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-red-500"
+            >
+              <Trash2 className="h-4 w-4" /> Remove meal
+            </button>
+          )}
+        </div>
       )}
+    </div>
+  )
+}
 
-      <button
-        type="button"
-        onClick={onLog}
-        aria-pressed={logged}
-        className={cn(
-          'mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-semibold transition active:scale-[0.98]',
-          logged ? 'bg-sage-500 text-white' : 'bg-coral-50 text-coral-700',
+function MyMeals({
+  meals,
+  favoriteIds,
+  loggedIds,
+  onAdd,
+  onFav,
+  onLog,
+  onRemove,
+}: {
+  meals: MealOption[]
+  favoriteIds: string[]
+  loggedIds: string[]
+  onAdd: (title: string, calories: number, protein: number) => void
+  onFav: (id: string) => void
+  onLog: (id: string) => void
+  onRemove: (id: string) => void
+}) {
+  const [adding, setAdding] = useState(false)
+  return (
+    <section>
+      <div className="mb-2 flex items-center justify-between px-1">
+        <h2 className="font-display font-bold text-ink">My meals</h2>
+        <button
+          type="button"
+          onClick={() => setAdding((v) => !v)}
+          className="flex items-center gap-1 rounded-full bg-coral-100 px-3 py-1.5 text-sm font-semibold text-coral-700"
+        >
+          <Plus className="h-4 w-4" /> Add a meal
+        </button>
+      </div>
+      {adding && (
+        <AddMealForm
+          onAdd={(t, c, p) => {
+            onAdd(t, c, p)
+            setAdding(false)
+          }}
+          onCancel={() => setAdding(false)}
+        />
+      )}
+      <div className="space-y-2">
+        {meals.length === 0 && !adding && (
+          <p className="px-1 text-sm text-ink-soft">Add a meal you eat often to log it in one tap.</p>
         )}
-      >
-        {logged ? (
-          <>
-            <Check className="h-4 w-4" /> Logged today
-          </>
-        ) : (
-          <>
-            <Plus className="h-4 w-4" /> Log to today
-          </>
-        )}
-      </button>
+        {meals.map((m) => (
+          <MealCard
+            key={m.id}
+            meal={m}
+            fav={favoriteIds.includes(m.id)}
+            onFav={() => onFav(m.id)}
+            logged={loggedIds.includes(m.id)}
+            onLog={() => onLog(m.id)}
+            onDelete={() => onRemove(m.id)}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function AddMealForm({
+  onAdd,
+  onCancel,
+}: {
+  onAdd: (title: string, calories: number, protein: number) => void
+  onCancel: () => void
+}) {
+  const [title, setTitle] = useState('')
+  const [calories, setCalories] = useState('')
+  const [protein, setProtein] = useState('')
+  const valid = title.trim().length > 0 && Number(calories) > 0
+  return (
+    <div className="mb-2 space-y-2 rounded-2xl bg-white p-3 shadow-sm shadow-black/5">
+      <input
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Meal name (e.g. Dahi + fruit)"
+        className="w-full rounded-xl border border-sand-200 bg-cream px-3 py-2.5 text-ink outline-none focus:border-coral-300"
+      />
+      <div className="flex gap-2">
+        <input
+          type="number"
+          inputMode="numeric"
+          value={calories}
+          onChange={(e) => setCalories(e.target.value)}
+          placeholder="kcal"
+          className="w-full rounded-xl border border-sand-200 bg-cream px-3 py-2.5 text-ink outline-none focus:border-coral-300"
+        />
+        <input
+          type="number"
+          inputMode="numeric"
+          value={protein}
+          onChange={(e) => setProtein(e.target.value)}
+          placeholder="protein (g)"
+          className="w-full rounded-xl border border-sand-200 bg-cream px-3 py-2.5 text-ink outline-none focus:border-coral-300"
+        />
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="min-h-10 flex-1 rounded-xl bg-sand font-display font-semibold text-ink"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          disabled={!valid}
+          onClick={() => onAdd(title, Number(calories), Number(protein) || 0)}
+          className="min-h-10 flex-1 rounded-xl bg-coral-500 font-display font-semibold text-white disabled:opacity-50"
+        >
+          Add meal
+        </button>
+      </div>
     </div>
   )
 }

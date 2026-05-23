@@ -343,16 +343,23 @@ function RestView({ seconds, label, paused }: { seconds: number; label: string; 
   )
 }
 
+const CELEBRATION_LINES = [
+  'Tu keh rahi thi exercise pasand nahi — aur phir bhi tu yahan hai. That is everything.',
+  "You showed up today. On the days you don't feel like it, that's exactly when it counts most.",
+  "That wasn't easy for you, and you did it anyway. Main proud hoon tujhpe.",
+  'Done! Future-you is going to be so glad you did this one.',
+  'Chhoti si jeet, par jeet hai — ek aur session, ek aur step stronger.',
+]
+
 function Celebration({ name, streak, onDone }: { name: string; streak: number; onDone: () => void }) {
+  const [line] = useState(() => CELEBRATION_LINES[Math.floor(Math.random() * CELEBRATION_LINES.length)])
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[26rem] flex-col items-center justify-center bg-cream px-6 text-center">
       <div className="flex h-24 w-24 items-center justify-center rounded-full bg-coral-500 shadow-lg shadow-coral-200">
         <Check className="h-12 w-12 text-white" strokeWidth={3} />
       </div>
       <h1 className="mt-6 font-display text-3xl font-bold text-ink">You did it, {name}!</h1>
-      <p className="mt-2 text-lg leading-relaxed text-ink-soft">
-        That's another session in the books. Your body and mind thank you.
-      </p>
+      <p className="mt-2 text-lg leading-relaxed text-ink-soft">{line}</p>
       <div className="mt-6 flex items-center gap-2 rounded-full bg-coral-100 px-5 py-3 text-coral-700">
         <Flame className="h-6 w-6 fill-coral-300 text-coral-500" />
         <span className="font-display text-xl font-bold">{streak}</span>
