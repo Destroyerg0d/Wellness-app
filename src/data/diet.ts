@@ -1,4 +1,4 @@
-import type { MealSlot, NutrientTarget, Season, SeasonalDiet } from '../types'
+import type { MealOption, MealSlot, NutrientTarget, Season, SeasonalDiet } from '../types'
 
 export const mealSlots: { slot: MealSlot; label: string; time: string }[] = [
   { slot: 'breakfast', label: 'Breakfast', time: '' },
@@ -422,6 +422,20 @@ export const seasonalDiets: Record<Season, SeasonalDiet> = {
   autumn,
   winter,
 }
+
+/** Flat lookup of every meal across all seasons (for intake tracking). */
+export const mealsById: Record<string, MealOption> = Object.values(seasonalDiets)
+  .flatMap((d) => Object.values(d.meals).flat())
+  .reduce(
+    (acc, m) => {
+      acc[m.id] = m
+      return acc
+    },
+    {} as Record<string, MealOption>,
+  )
+
+/** Daily intake goals (midpoints of the nutrient targets) used by the tracker. */
+export const intakeGoals = { calories: 2000, protein: 80 }
 
 // ---------- Daily nutrient targets (11.9) ----------
 export const nutrientTargets: NutrientTarget[] = [

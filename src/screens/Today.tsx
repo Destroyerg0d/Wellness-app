@@ -12,6 +12,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { WaterTracker } from '../components/WaterTracker'
 import { BirthdayCountdown } from '../components/BirthdayCountdown'
+import { LucknowCountdown } from '../components/LucknowCountdown'
 import { cn } from '../lib/cn'
 
 const typeIcon: Record<WorkoutType, ComponentType<{ className?: string; strokeWidth?: number }>> = {
@@ -110,7 +111,8 @@ export default function Today() {
         <WaterTracker compact />
       </Card>
 
-      {/* Birthday countdown */}
+      {/* Countdowns */}
+      <LucknowCountdown />
       <BirthdayCountdown />
 
       {/* Food shortcut */}

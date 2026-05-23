@@ -52,7 +52,7 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
       <p className="mt-6 text-center text-xs text-ink-soft/60">Hint: a date that's all about you.</p>
 
       <div className="mt-8">
-        <BirthdayCountdown compact />
+        <BirthdayCountdown />
       </div>
     </div>
   )

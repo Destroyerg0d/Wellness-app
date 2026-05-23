@@ -19,6 +19,7 @@ interface StoreValue {
   setWater: (glasses: number, date?: string) => void
   addWater: (delta: number, date?: string) => void
   toggleFavorite: (mealId: string) => void
+  toggleMealLog: (mealId: string, date?: string) => void
   updateSettings: (patch: SettingsPatch) => void
   resetAll: () => void
 }
@@ -111,6 +112,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ? s.favoriteMealIds.filter((id) => id !== mealId)
             : [...s.favoriteMealIds, mealId],
         })),
+      toggleMealLog: (mealId, date = todayKey()) =>
+        mutate((s) => {
+          const day = s.mealLog[date] ?? []
+          const next = day.includes(mealId) ? day.filter((id) => id !== mealId) : [...day, mealId]
+          return { ...s, mealLog: { ...s.mealLog, [date]: next } }
+        }),
       updateSettings: (patch) => mutate((s) => ({ ...s, ...patch })),
       resetAll: () => {
         clearState()

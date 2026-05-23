@@ -88,6 +88,7 @@ export interface UserState {
   waterGoalGlasses: number
   waterLog: Record<string, number> // date -> glasses
   walkLog: Record<string, boolean> // date -> optional walk logged (rest days)
+  mealLog: Record<string, string[]> // date -> logged meal ids (intake tracking)
   completedSessions: CompletedSession[]
   favoriteMealIds: string[]
   onboardingComplete: boolean

@@ -13,6 +13,7 @@ export function defaultUserState(): UserState {
     waterGoalGlasses: 12,
     waterLog: {},
     walkLog: {},
+    mealLog: {},
     completedSessions: [],
     favoriteMealIds: [],
     onboardingComplete: false,
@@ -43,6 +44,7 @@ export function loadState(): UserState {
       ...parsed,
       waterLog: { ...(parsed.waterLog ?? {}) },
       walkLog: { ...(parsed.walkLog ?? {}) },
+      mealLog: { ...(parsed.mealLog ?? {}) },
       completedSessions: Array.isArray(parsed.completedSessions) ? parsed.completedSessions : [],
       favoriteMealIds: Array.isArray(parsed.favoriteMealIds) ? parsed.favoriteMealIds : [],
     }

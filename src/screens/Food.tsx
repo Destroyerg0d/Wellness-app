@@ -1,10 +1,19 @@
 import { useState } from 'react'
-import { ChevronDown, Clock, CloudRain, Egg, Heart, Leaf, Moon, Snowflake, Sparkles, Sun } from 'lucide-react'
+import { Check, ChevronDown, Clock, CloudRain, Egg, Heart, Leaf, Moon, Plus, Snowflake, Sparkles, Sun } from 'lucide-react'
 import type { MealOption, Season } from '../types'
 import type { IconType } from '../lib/dayUi'
 import { useStore } from '../lib/store'
 import { resolveSeason } from '../lib/scheduleUtils'
-import { mealSlots, nutrientCoverageNotes, nutrientTargets, plateRule, seasonalDiets } from '../data/diet'
+import { todayKey } from '../lib/dateUtils'
+import {
+  intakeGoals,
+  mealSlots,
+  mealsById,
+  nutrientCoverageNotes,
+  nutrientTargets,
+  plateRule,
+  seasonalDiets,
+} from '../data/diet'
 import { cn } from '../lib/cn'
 
 const seasonMeta: Record<Season, { label: string; icon: IconType }> = {
@@ -16,11 +25,17 @@ const seasonMeta: Record<Season, { label: string; icon: IconType }> = {
 const seasonOrder: Season[] = ['summer', 'monsoon', 'autumn', 'winter']
 
 export default function Food() {
-  const { state, toggleFavorite } = useStore()
+  const { state, toggleFavorite, toggleMealLog } = useStore()
   const [viewSeason, setViewSeason] = useState<Season>(() => resolveSeason(state.seasonOverride))
   const [lazyOnly, setLazyOnly] = useState(false)
   const [favOnly, setFavOnly] = useState(false)
   const [showNutrients, setShowNutrients] = useState(false)
+
+  const today = todayKey()
+  const loggedIds = state.mealLog[today] ?? []
+  const loggedMeals = loggedIds.map((id) => mealsById[id]).filter((m): m is MealOption => Boolean(m))
+  const intakeCalories = loggedMeals.reduce((sum, m) => sum + m.approxCalories, 0)
+  const intakeProtein = loggedMeals.reduce((sum, m) => sum + m.approxProtein, 0)
 
   const diet = seasonalDiets[viewSeason]
   const filt = (opts: MealOption[]) =>
@@ -32,6 +47,8 @@ export default function Food() {
   return (
     <div className="space-y-4">
       <h1 className="font-display text-2xl font-bold text-ink">Food</h1>
+
+      <IntakeCard calories={intakeCalories} protein={intakeProtein} count={loggedMeals.length} />
 
       {/* Season switcher */}
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
@@ -90,6 +107,8 @@ export default function Food() {
                     meal={meal}
                     fav={state.favoriteMealIds.includes(meal.id)}
                     onFav={() => toggleFavorite(meal.id)}
+                    logged={loggedIds.includes(meal.id)}
+                    onLog={() => toggleMealLog(meal.id)}
                   />
                 ))}
               </div>
@@ -189,7 +208,19 @@ function FilterChip({
   )
 }
 
-function MealCard({ meal, fav, onFav }: { meal: MealOption; fav: boolean; onFav: () => void }) {
+function MealCard({
+  meal,
+  fav,
+  onFav,
+  logged,
+  onLog,
+}: {
+  meal: MealOption
+  fav: boolean
+  onFav: () => void
+  logged: boolean
+  onLog: () => void
+}) {
   const [showEgg, setShowEgg] = useState(false)
   return (
     <div className="rounded-3xl bg-white p-4 shadow-sm shadow-black/5">
@@ -256,6 +287,79 @@ function MealCard({ meal, fav, onFav }: { meal: MealOption; fav: boolean; onFav:
           )}
         </>
       )}
+
+      <button
+        type="button"
+        onClick={onLog}
+        aria-pressed={logged}
+        className={cn(
+          'mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-semibold transition active:scale-[0.98]',
+          logged ? 'bg-sage-500 text-white' : 'bg-coral-50 text-coral-700',
+        )}
+      >
+        {logged ? (
+          <>
+            <Check className="h-4 w-4" /> Logged today
+          </>
+        ) : (
+          <>
+            <Plus className="h-4 w-4" /> Log to today
+          </>
+        )}
+      </button>
+    </div>
+  )
+}
+
+function IntakeCard({ calories, protein, count }: { calories: number; protein: number; count: number }) {
+  const message =
+    count === 0
+      ? "Tap 'Log to today' on a meal to start tracking your day."
+      : protein < intakeGoals.protein * 0.6
+        ? 'Going well — a protein-rich meal would help you reach your goal.'
+        : calories >= intakeGoals.calories * 0.8 && protein >= intakeGoals.protein * 0.8
+          ? 'Beautifully balanced today. Well done, Shreya!'
+          : 'Nice — keep it going through the day.'
+  return (
+    <div className="rounded-3xl bg-white p-4 shadow-sm shadow-black/5">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-display font-bold text-ink">Today's intake</h2>
+        <span className="text-xs text-ink-soft">
+          {count} meal{count === 1 ? '' : 's'} logged
+        </span>
+      </div>
+      <NutrientBar label="Energy" value={calories} goal={intakeGoals.calories} unit="kcal" accent="bg-coral-500" />
+      <NutrientBar label="Protein" value={protein} goal={intakeGoals.protein} unit="g" accent="bg-sage-500" />
+      <p className="mt-2 text-sm leading-relaxed text-ink-soft">{message}</p>
+    </div>
+  )
+}
+
+function NutrientBar({
+  label,
+  value,
+  goal,
+  unit,
+  accent,
+}: {
+  label: string
+  value: number
+  goal: number
+  unit: string
+  accent: string
+}) {
+  const pct = Math.min((value / goal) * 100, 100)
+  return (
+    <div className="mb-2.5 last:mb-0">
+      <div className="mb-1 flex justify-between text-sm">
+        <span className="font-semibold text-ink">{label}</span>
+        <span className="text-ink-soft">
+          {Math.round(value)} / {goal} {unit}
+        </span>
+      </div>
+      <div className="h-2.5 overflow-hidden rounded-full bg-sand-200">
+        <div className={cn('h-full rounded-full transition-all duration-500', accent)} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   )
 }
