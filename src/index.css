@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  /* Typography */
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fredoka", "Nunito", ui-sans-serif, system-ui, sans-serif;
+
+  /* Warm coral / peach — primary */
+  --color-coral-50: #fff4f0;
+  --color-coral-100: #ffe6dd;
+  --color-coral-200: #ffc9b8;
+  --color-coral-300: #ffa88e;
+  --color-coral-400: #ff8a6b;
+  --color-coral-500: #f97150;
+  --color-coral-600: #e5572f;
+  --color-coral-700: #bd4324;
+
+  /* Warm neutrals */
+  --color-cream: #fff8f3;
+  --color-sand: #f6ece4;
+  --color-sand-200: #ecdfd4;
+  --color-ink: #3f342f;
+  --color-ink-soft: #7a6a61;
+
+  /* Calm sage — rest / success */
+  --color-sage-50: #eef6ef;
+  --color-sage-100: #dcecdd;
+  --color-sage-200: #c3e0c7;
+  --color-sage-400: #7cb98a;
+  --color-sage-500: #5aa06b;
+  --color-sage-600: #468254;
+  --color-sage-700: #386b46;
+
+  /* Hydration aqua */
+  --color-aqua-50: #e9f6f7;
+  --color-aqua-100: #d2eef0;
+  --color-aqua-200: #b9e4e8;
+  --color-aqua-300: #84d0d6;
+  --color-aqua-400: #54c1ca;
+  --color-aqua-500: #2ba3ad;
+  --color-aqua-600: #1f8690;
+  --color-aqua-700: #176d76;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+  }
+  button {
+    font-family: inherit;
+  }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

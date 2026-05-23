@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+.playwright-mcp
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
