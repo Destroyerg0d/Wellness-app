@@ -51,7 +51,7 @@ export const workoutDays: WorkoutDay[] = [
     id: 'day-3',
     dayLabel: 'Day 3 — Yoga + Mobility',
     weekday: 'Fri',
-    focus: 'Calm + Flexibility (PCOS-friendly)',
+    focus: 'Calm + Flexibility',
     type: 'yoga',
     estMinutes: 30,
     warmupIds: [],
@@ -71,7 +71,7 @@ export const workoutDays: WorkoutDay[] = [
     cooldownIds: [],
     roundsOverride: 1,
     whyItWorks:
-      'This is the calm day — it lowers stress, improves flexibility, and is especially good for PCOS. Move slowly and breathe through your nose.',
+      'This is the calm day — it lowers stress, improves flexibility, and is especially kind on tired or low-energy days. Move slowly and breathe through your nose.',
     note: 'Repeat the whole sequence twice if you have time. During your period, skip or shorten the deep belly-compression poses (Cobra, Bridge) if you feel cramping.',
   },
   {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Minus, Plus } from 'lucide-react'
+import { Heart, Minus, Plus } from 'lucide-react'
 import type { Season } from '../types'
 import { useStore } from '../lib/store'
 import { currentWeek } from '../lib/scheduleUtils'
@@ -42,6 +42,35 @@ export default function Settings() {
   return (
     <div className="space-y-5 pb-4">
       <h1 className="font-display text-2xl font-bold text-ink">Settings</h1>
+
+      {/* A note from your friend */}
+      <section>
+        <div className="rounded-3xl bg-gradient-to-br from-coral-100 to-sand p-5">
+          <div className="mb-2 flex items-center gap-2">
+            <Heart className="h-5 w-5 fill-coral-400 text-coral-500" />
+            <h2 className="font-display font-bold text-ink">A note from your friend</h2>
+          </div>
+          <div className="space-y-2 text-sm leading-relaxed text-ink">
+            <p>Kya haal hai, Shreya!</p>
+            <p>
+              Agar tu ye padh rahi hai, matlab tune app khol liya — and that's already a win. I know
+              you and exercise were never best friends. Koi baat nahi.
+            </p>
+            <p>
+              I didn't make this to turn you into a "gym person." I made it because I care about you,
+              and I want you to feel a little stronger and a little happier — on your own terms. Some
+              days you'll do the whole thing, some days you'll just open it and close it. Dono count
+              hote hain.
+            </p>
+            <p>
+              Missed a day? Bilkul chalega — bas do din gayab mat ho jaana. Main hamesha tere corner
+              mein hoon, cheering for every tiny step.
+            </p>
+            <p>Tu bas shuru kar — baaki sab main aur ye app sambhal lenge.</p>
+            <p className="font-display font-semibold text-coral-700">— always, your best friend</p>
+          </div>
+        </div>
+      </section>
 
       {/* Name */}
       <section>
@@ -184,8 +213,7 @@ export default function Settings() {
           </p>
           <p className="rounded-2xl bg-sand/60 p-3 text-ink">
             <span className="font-semibold">A gentle note:</span> This app is a wellness companion, not
-            medical advice. Please check with a doctor before starting a new exercise or diet routine,
-            especially with PCOS.
+            medical advice. Please check with a doctor before starting a new exercise or diet routine.
           </p>
           <p className="text-xs text-ink-soft/70">
             Exercise demonstration images from free-exercise-db (public domain).

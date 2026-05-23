@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CalendarDays, HeartHandshake, Sparkles } from 'lucide-react'
+import { CalendarDays, Heart, HeartHandshake } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { todayKey } from '../lib/dateUtils'
 import { Button } from '../components/Button'
@@ -44,9 +44,9 @@ export default function Onboarding() {
           >
             {step === 0 && (
               <Step
-                icon={<Sparkles className="h-9 w-9 text-coral-500" strokeWidth={1.8} />}
-                title="Hi Shreya!"
-                body="This is your personal wellness space — built just for you. Gentle, beginner-friendly, and completely yours. No pressure, ever."
+                icon={<Heart className="h-9 w-9 fill-coral-200 text-coral-500" strokeWidth={1.8} />}
+                title="Kya haal hai, Shreya!"
+                body="I know exercise has never really been your thing — and honestly, that's exactly why I made this for you. No pressure, no guilt. Just ten tiny minutes whenever you feel like it. Main yahin hoon, har step pe tere saath."
               />
             )}
             {step === 1 && (
@@ -75,8 +75,7 @@ export default function Onboarding() {
               >
                 <div className="mt-4 rounded-2xl bg-sand/60 p-4 text-sm leading-relaxed text-ink-soft">
                   This app is a personal wellness companion based on a researched plan — not medical
-                  advice. Please check with a doctor before starting a new exercise or diet routine,
-                  especially with PCOS.
+                  advice. Please check with a doctor before starting a new exercise or diet routine.
                 </div>
               </Step>
             )}

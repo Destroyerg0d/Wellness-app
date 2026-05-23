@@ -319,12 +319,12 @@ const monsoon: SeasonalDiet = {
       { id: 'mo-bf-cheela', title: 'Moong dal cheela x2', description: 'Two savoury moong-dal pancakes — plant protein and iron.', prepMinutes: 12, approxCalories: 400, approxProtein: 18, nutrients: 'Plant protein, iron', hasEggOption: false },
     ],
     midMorning: [
-      { id: 'mo-mm-jamun', title: 'Jamun + almonds', description: 'Seasonal jamun with a few almonds — very PCOS-friendly and low-GI.', prepMinutes: 2, approxCalories: 150, approxProtein: 4, nutrients: 'Low-GI, PCOS-friendly', hasEggOption: false, isLazyPick: true },
+      { id: 'mo-mm-jamun', title: 'Jamun + almonds', description: 'Seasonal jamun with a few almonds — low-GI and gentle on blood sugar.', prepMinutes: 2, approxCalories: 150, approxProtein: 4, nutrients: 'Low-GI, blood-sugar friendly', hasEggOption: false, isLazyPick: true },
       { id: 'mo-mm-tea', title: 'Ginger-tulsi tea + roasted chana', description: 'A warming herbal tea with a fistful of roasted chana.', prepMinutes: 5, approxCalories: 150, approxProtein: 6, nutrients: 'Immunity, protein', hasEggOption: false },
       { id: 'mo-mm-mattha', title: 'Warm spiced mattha', description: 'Lightly warmed, well-spiced buttermilk — gentle on the gut.', prepMinutes: 3, approxCalories: 140, approxProtein: 6, nutrients: 'Probiotics, soothing', hasEggOption: false },
     ],
     lunch: [
-      { id: 'mo-ln-karela', title: 'Roti + arhar dal + karela sabzi + mattha', description: 'A warming plate with karela — gentle on blood sugar (great for PCOS).', prepMinutes: 25, approxCalories: 520, approxProtein: 20, nutrients: 'Blood-sugar friendly', hasEggOption: false },
+      { id: 'mo-ln-karela', title: 'Roti + arhar dal + karela sabzi + mattha', description: 'A warming plate with karela — gentle on blood sugar.', prepMinutes: 25, approxCalories: 520, approxProtein: 20, nutrients: 'Blood-sugar friendly', hasEggOption: false },
       { id: 'mo-ln-khichdi', title: 'Moong dal khichdi + steamed veg', description: 'Soft khichdi with steamed vegetables — complete and easy.', prepMinutes: 20, approxCalories: 520, approxProtein: 19, nutrients: 'Gentle, complete', hasEggOption: false },
       { id: 'mo-ln-rajma', title: 'Rajma-chawal (well-cooked) + dahi', description: 'Thoroughly cooked rajma with rice and dahi.', prepMinutes: 25, approxCalories: 580, approxProtein: 23, nutrients: 'Iron, folate', hasEggOption: false },
     ],

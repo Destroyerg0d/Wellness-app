@@ -286,7 +286,7 @@ export const exercises: Exercise[] = [
     imageFile: 'yoga-bridge.jpg',
     durationSeconds: 30,
     formCues:
-      'On your back, knees bent, lift the hips and squeeze the glutes. Good for PCOS — it improves pelvic circulation. On your period, skip or shorten this if you feel cramping.',
+      'On your back, knees bent, lift the hips and squeeze the glutes. It improves pelvic circulation and feels grounding. On your period, skip or shorten this if you feel cramping.',
     easierVariation: 'Lift only a little, or rest a cushion under your hips.',
   },
   {
