@@ -5,6 +5,7 @@ import { clearState, defaultUserState, loadState, saveState } from './storage'
 import { todayKey } from './dateUtils'
 import { isCloudEnabled } from './supabase'
 import { fetchRemoteState, pushRemoteState } from './sync'
+import { clearActiveSession } from './activeSession'
 
 type SettingsPatch = Partial<
   Pick<UserState, 'userName' | 'startDate' | 'seasonOverride' | 'waterGoalGlasses' | 'soundEnabled'>
@@ -146,6 +147,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateSettings: (patch) => mutate((s) => ({ ...s, ...patch })),
       resetAll: () => {
         clearState()
+        clearActiveSession()
+        try {
+          localStorage.removeItem('sw-install-dismissed') // let the install prompt show again for a fresh start
+        } catch {
+          /* ignore */
+        }
         setState(stamp({ ...defaultUserState(), onboardingComplete: false }))
       },
     }
